@@ -11,7 +11,24 @@ services:
     volumes:
       - ./services/redis/data:/data
       - ./services/redis/redis-stack.conf:/redis-stack.conf
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
+    restart: unless-stopped
+  web:
+    build: ./services/web
+    container_name: svr_se_web
+    env_file: ./.env
+    volumes:
+      - ./common:/home/common
+      - ./static:/home/app/static
+    restart: unless-stopped
+    depends_on:
+      - redis
+  nginx:
+    build: ./services/nginx
+    container_name: svr_se_nginx
+    volumes:
+      - ./static:/www/web/static
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    depends_on:
+      - web
