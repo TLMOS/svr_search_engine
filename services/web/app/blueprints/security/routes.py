@@ -1,14 +1,13 @@
-import uuid
-
 from flask import request
 from flask_login import login_required, current_user, logout_user
 
 from common.utils import is_valid_url
+from common.config import settings
 from app.blueprints.security import bp
 from app.logic import render, action, flash, session
 from app.clients import source_manager
 from app.clients.source_manager import session as sm_session
-from app.security import auth, secrets
+from app.security import secrets
 
 
 @bp.before_request
@@ -85,6 +84,12 @@ def set_source_manager_credentials():
     current_user.db.source_manager.url = new_url
     current_user.db.source_manager.secret = new_secret
     current_user.db.save()
+
+    source_manager.security.set_rabbitmq_credentials(
+        username=settings.rabbitmq.sm_username,
+        password=settings.rabbitmq.sm_password,
+        sm_name=current_user.db.username,
+    )
 
     flash(message='Source manager credentials updated.', category='success')
 

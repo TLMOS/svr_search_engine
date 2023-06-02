@@ -11,12 +11,16 @@ class WebSettings(BaseModel):
     client_id: str = 'search_engine_web_ui'
     max_content_length: int = 1024 * 1024 * 200
     upload_extensions: list[str] = ['.jpg', '.png', '.mp4', '.avi']
-    session_state_update_interval: int = 60
 
 
 class RedisSettings(BaseModel):
     host: str = 'redis'
     port: int = 6379
+
+
+class RabbitMQSettings(BaseModel):
+    sm_username: str = 'source_manager'
+    sm_password: str = 'source_manager'
 
 
 class SecuritySettings(BaseModel):
@@ -33,6 +37,7 @@ class PathsSettings(BaseModel):
 class Settings(BaseSettings):
     web: WebSettings = WebSettings()
     redis: RedisSettings = RedisSettings()
+    rabbitmq: RabbitMQSettings = RabbitMQSettings()
     security: SecuritySettings = SecuritySettings()
     paths: PathsSettings = PathsSettings()
 

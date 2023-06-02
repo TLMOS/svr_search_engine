@@ -2,35 +2,16 @@ from datetime import datetime
 from datetime import timedelta
 from urllib.error import HTTPError
 import base64
-import time
 
 from flask import request, session, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 
-from common.config import settings
 from common.constants import SOURCE_STATUS_TO_STR
 from common.constants import SourceStatus
 from app.blueprints.sources import bp
 from app.clients import source_manager
 from app.logic import action, render
 from app.utils import float_to_color
-
-
-def sm_rabbitmq_ensure_opened():
-    """Ensure that RabbitMQ connection is opened by source manager."""
-    if 'sm_rabbitmq' not in session:
-        session['sm_rabbitmq'] = {
-            'is_opened': source_manager.rabbitmq.is_opened(),
-            'last_update': time.time(),
-        }
-    sm_rabbit_mq = session['sm_rabbitmq']
-    since_last_update = time.time() - sm_rabbit_mq['last_update']
-    if since_last_update > settings.web.session_state_update_interval:
-        sm_rabbit_mq['is_opened'] = source_manager.rabbitmq.is_opened()
-        sm_rabbit_mq['last_update'] = time.time()
-    if not sm_rabbit_mq['is_opened']:
-        source_manager.rabbitmq.startup()
-        sm_rabbit_mq['is_opened'] = True
 
 
 @bp.before_request
@@ -42,8 +23,6 @@ def before_request():
 @bp.route('/', methods=['GET', 'POST'])
 @render(template='sources/index.html', endpoint='sources.index')
 def index():
-    sm_rabbitmq_ensure_opened()
-
     search_entry = request.args.get('search_entry', '')
     show_finished = request.args.get('show_finished', 'off')
 
@@ -70,7 +49,7 @@ def index():
 @bp.route('rabbitmq/startup', methods=['POST'])
 @action(endpoint='sources.index')
 def rabbitmq_startup():
-    source_manager.rabbitmq.startup()
+    source_manager.rabbitmq.startup(current_user.db.username)
 
 
 @bp.route('/add', methods=['POST'])
