@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<h1 class="">{% block title %} SVR Search {% endblock %}</h1>
+
+<div class="card mb-4 mt-4">
+    <div class="card-body">
+        <form action="{{ url_for('search.index') }}" method="GET">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </div>
+                <input type="text" name="search_entry" class="form-control" placeholder="What are you looking for?"
+                    aria-label="Entry" aria-describedby="basic-addon1" 
+                    value="{{ search_entry }}">
+            </div>
+            <div class="input-group mt-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">
+                        <i class="fas fa-calendar-alt"></i>
+                    </span>
+                </div>
+                <input type="date" name="start_date" class="form-control" placeholder="Start Date"
+                    aria-label="Start date" aria-describedby="basic-addon1" 
+                    value="{{ start_date }}">
+                <input type="date" name="end_date" class="form-control" placeholder="End Date" aria-label="End date"
+                    aria-describedby="basic-addon1"  value="{{ end_date }}">
+            </div>
+            <div class="input-group mt-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">
+                        <i class="fas fa-clock"></i>
+                    </span>
+                </div>
+                <input type="time" name="start_time" class="form-control" placeholder="Start Time"
+                    aria-label="Start time" aria-describedby="basic-addon1" 
+                    value="{{ start_time }}">
+                <input type="time" name="end_time" class="form-control" placeholder="End Time" aria-label="End time"
+                    aria-describedby="basic-addon1"  value="{{ end_time }}">
+            </div>
+            <div class="input-group mt-4">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">
+                        <i class="fas fa-sort-amount-up"></i>
+                    </span>
+                </div>
+                <input type="number" min="1" max="30" value="5" name="top_k" class="form-control" placeholder="Top-k" aria-label="Top-k"
+                    aria-describedby="basic-addon1" value="{{ top_k }}">
+            </div>
+        <div class="input-group mt-4">
+            <button type="submit" class="btn btn-dark btn-lg btn-block">Search</button>
+        </form>
+    </div>
+</div>
+
+{% if results %}
+{% for frame, image in results %}
+<div class="card mb-4 mt-4">
+    <div class="card-body">
+        <div class="text-center">
+            <img src="data:image/png;base64,{{ image }}" class="img-fluid rounded" alt="Responsive image">
+        </div>
+    </div>
+    <div class="card-footer">
+        <ul>
+            <p>Source: {{ frame.source_id }}</p>
+        </ul>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock %}

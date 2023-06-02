@@ -53,8 +53,11 @@ def create_app():
     from app.blueprints.security import bp as security_bp
     app.register_blueprint(security_bp, url_prefix='/security')
 
-    from app.blueprints.sources import bp as posts_bp
-    app.register_blueprint(posts_bp, url_prefix='/sources')
+    from app.blueprints.sources import bp as sources_bp
+    app.register_blueprint(sources_bp, url_prefix='/sources')
+
+    from app.blueprints.search import bp as search_bp
+    app.register_blueprint(search_bp, url_prefix='/search')
 
     Migrator().run()
 

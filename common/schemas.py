@@ -58,3 +58,16 @@ class VideoChunk(VideoChunkBase):
                 'end_time': 10.0
             }
         }
+
+
+class Frame(BaseModel):
+    source_id: int
+    timestamp: float
+
+    class Config:
+        schema_extra = {
+            'example': {
+                'source_id': 1,
+                'timestamp': 1234567890.234
+            }
+        }

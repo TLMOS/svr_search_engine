@@ -12,6 +12,22 @@ services:
       - ./services/redis/data:/data
       - ./services/redis/redis-stack.conf:/redis-stack.conf
     restart: unless-stopped
+  encoder:
+    build: ./services/encoder
+    env_file: ./.env
+    volumes:
+      - ./common:/home/common
+      - ./models:/home/models
+    restart: unless-stopped
+  search_engine:
+    build: ./services/search_engine
+    env_file: ./.env
+    volumes:
+      - ./common:/home/common
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - encoder
   web:
     build: ./services/web
     container_name: svr_se_web

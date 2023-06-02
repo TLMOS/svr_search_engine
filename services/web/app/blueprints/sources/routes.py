@@ -4,7 +4,7 @@ from urllib.error import HTTPError
 import base64
 
 from flask import request, session, flash
-from flask_login import login_required, current_user
+from flask_login import login_required
 
 from common.constants import SOURCE_STATUS_TO_STR
 from common.constants import SourceStatus
@@ -44,12 +44,6 @@ def index():
     return {
         'sources_with_status': zip(sources, statuses)
     }
-
-
-@bp.route('rabbitmq/startup', methods=['POST'])
-@action(endpoint='sources.index')
-def rabbitmq_startup():
-    source_manager.rabbitmq.startup(current_user.db.username)
 
 
 @bp.route('/add', methods=['POST'])
