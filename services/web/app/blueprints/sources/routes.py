@@ -8,10 +8,10 @@ from flask_login import login_required
 
 from common.constants import SOURCE_STATUS_TO_STR
 from common.constants import SourceStatus
+from common.utils.frontend import float_to_color
 from app.blueprints.sources import bp
 from app.clients import source_manager
-from app.logic import action, render
-from app.utils import float_to_color
+from app import logic
 
 
 @bp.before_request
@@ -21,7 +21,7 @@ def before_request():
 
 
 @bp.route('/', methods=['GET', 'POST'])
-@render(template='sources/index.html', endpoint='sources.index')
+@logic.render(template='sources/index.html', endpoint='sources.index')
 def index():
     search_entry = request.args.get('search_entry', '')
     show_finished = request.args.get('show_finished', 'off')
@@ -47,7 +47,7 @@ def index():
 
 
 @bp.route('/add', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def add():
     name = request.form['name']
     url = request.form['url']
@@ -63,43 +63,45 @@ def add():
 
 
 @bp.route('/start/<int:id>', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def start(id: int):
     source_manager.sources.start(id)
 
 
 @bp.route('/start/all', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def start_all():
-    source_manager.sources.start_all()
+    start_finished = session['sources.index'].get('show_finished', 'off')
+    start_finished = start_finished == 'on'
+    source_manager.sources.start_all(start_finished)
 
 
 @bp.route('/pause/<int:id>', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def pause(id: int):
     source_manager.sources.pause(id)
 
 
 @bp.route('/pause/all', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def pause_all():
     source_manager.sources.pause_all()
 
 
 @bp.route('/finish/<int:id>', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def finish(id: int):
     source_manager.sources.finish(id)
 
 
 @bp.route('/delete/<int:id>', methods=['POST'])
-@action(endpoint='sources.index')
+@logic.action(endpoint='sources.index')
 def delete(id: int):
     source_manager.sources.delete(id)
 
 
 @bp.route('/<int:id>', methods=['GET'])
-@render(template='sources/source.html')
+@logic.render(template='sources/source.html')
 def source(id: int):
     source = source_manager.sources.get(id)
     status = SOURCE_STATUS_TO_STR[source.status_code]

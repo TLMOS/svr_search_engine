@@ -1,24 +1,27 @@
-FROM python:3.10-alpine
-
-RUN addgroup -S app && adduser -S app -G app
+FROM python:3.10-slim
 
 WORKDIR /home
 
-RUN apk add python3-dev build-base linux-headers pcre-dev  && \
-    apk --no-cache add musl-dev linux-headers g++
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc \
+    && apt-get install ffmpeg libsm6 libxext6  -y
 
-RUN pip install uwsgi
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY ./requirements.txt .
+COPY ./services/web/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install uwsgi
 
-COPY . $APP_HOME
+COPY ./common ./common
+COPY ./services/web .
 
-RUN chown -R app:app /home
+RUN groupadd -r app && \
+    useradd -r -g app -d /home -s /sbin/nologin -c "Docker image user" app && \
+    chown -R app:app /home
 
 USER app
 
-EXPOSE 5000
+EXPOSE 8080
 
-CMD ["uwsgi", "--ini", "uwsgi.ini", "--http", "0.0.0.0:5000"]
+CMD ["uwsgi", "--ini", "uwsgi.ini", "--http", "0.0.0.0:8080"]

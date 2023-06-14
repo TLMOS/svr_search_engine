@@ -4,29 +4,54 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from pydantic import BaseModel, ValidationError
 from flask_login import UserMixin
+from redis_om import NotFoundError
 
 from common.config import settings
-from app import models
+from app.database import models
 
 
 class TokenData(BaseModel):
     """ OAuth2 access token data """
-    username: str
-    sm_secret: str
+    user_pk: str
+    source_manager_api_key: Optional[str] = None
 
 
 class UserSession(BaseModel, UserMixin):
-    db: models.User
-    sm_secret: str
-    token: Optional[str] = None
+    token: str
+    db_user: models.User
+    source_manager_api_key: Optional[str] = None
+
+    @staticmethod
+    def from_token(token: str) -> 'UserSession':
+        """
+        Create UserSession from JWT token.
+
+        Parameters:
+        - token (str): encoded JWT access token
+
+        Returns:
+        - UserSession: UserSession object
+        """
+        token_data = decode_access_token(token)
+        if token_data is None:
+            return None
+
+        try:
+            db_user = models.User.get(token_data.user_pk)
+        except NotFoundError:
+            return None
+
+        return UserSession(
+            token=token,
+            db_user=db_user,
+            source_manager_api_key=token_data.source_manager_api_key,
+        )
 
     def get_id(self):
         """
         ID used for Flask-Login. Can be any unique identifier.
         Part of UserMixin logic.
         """
-        if self.token is None:
-            raise AttributeError('token is not set')
         return self.token
 
 
@@ -50,8 +75,8 @@ def create_access_token(data: dict,
     to_encode.update({'exp': expire})
     encoded_jwt = jwt.encode(
         to_encode,
-        key=settings.security.secret_key,
-        algorithm=settings.security.jwt_algorithm,
+        key=settings.web.secret_key,
+        algorithm=settings.web.jwt_algorithm,
     )
     return encoded_jwt
 
@@ -70,14 +95,14 @@ def decode_access_token(token: str) -> Optional[TokenData]:
     try:
         payload = jwt.decode(
             token=token,
-            key=settings.security.secret_key,
-            algorithms=[settings.security.jwt_algorithm],
+            key=settings.web.secret_key,
+            algorithms=[settings.web.jwt_algorithm],
         )
-        username = payload.get('sub')
-        sm_secret = payload.get('sm_secret')
+        user_pk = payload.get('user_pk')
+        source_manager_api_key = payload.get('source_manager_api_key', None)
         return TokenData(
-            username=username,
-            sm_secret=sm_secret,
+            user_pk=user_pk,
+            source_manager_api_key=source_manager_api_key,
         )
     except (JWTError, ValidationError):
         return None

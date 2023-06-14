@@ -1,50 +1,46 @@
-version: "3.9"
+version: '3.9'
+
+volumes:
+  huggingface_cache:
+    external: false
 
 services:
-  redis:
-    image: redis/redis-stack:latest
-    container_name: svr_se_redis
-    env_file: ./.env
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: svr_se_node_exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     ports:
-      - 6379:6379
-      - 8001:8001
-    volumes:
-      - ./services/redis/data:/data
-      - ./services/redis/redis-stack.conf:/redis-stack.conf
-    restart: unless-stopped
+      - 9100:9100
+
   encoder:
-    build: ./services/encoder
+    build:
+      context: .
+      dockerfile: ./services/encoder/Dockerfile
+    container_name: svr_se_encoder
+    restart: unless-stopped
     env_file: ./.env
     volumes:
-      - ./common:/home/common
-      - ./models:/home/models
-    restart: unless-stopped
-  search_engine:
-    build: ./services/search_engine
-    env_file: ./.env
-    volumes:
-      - ./common:/home/common
-    restart: unless-stopped
-    depends_on:
-      - redis
-      - encoder
+      - huggingface_cache:/root/.cache/huggingface/hub/
+
   web:
-    build: ./services/web
+    build:
+      context: .
+      dockerfile: ./services/web/Dockerfile
     container_name: svr_se_web
+    restart: unless-stopped
     env_file: ./.env
     volumes:
-      - ./common:/home/common
       - ./static:/home/app/static
-    restart: unless-stopped
     depends_on:
-      - redis
-  nginx:
-    build: ./services/nginx
-    container_name: svr_se_nginx
-    volumes:
-      - ./static:/www/web/static
-    restart: unless-stopped
+      - encoder
     ports:
       - 8080:8080
-    depends_on:
-      - web

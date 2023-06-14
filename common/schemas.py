@@ -5,6 +5,24 @@ from pydantic import BaseModel
 from common.constants import SourceStatus
 
 
+class RabbitMQCredentials(BaseModel):
+    host: str
+    port: int
+    virtual_host: str
+    username: str
+    password: str
+
+
+class ClientCredentials(BaseModel):
+    client_id: str
+    client_secret: str
+
+
+class SourceManagerRegister(BaseModel):
+    api_key: str
+    search_engine: ClientCredentials
+
+
 class SourceBase(BaseModel):
     name: str
     url: str
@@ -21,15 +39,6 @@ class Source(SourceBase):
 
     class Config:
         orm_mode = True
-        schema_extra = {
-            'example': {
-                'id': 1,
-                'name': 'Parking lot',
-                'url': 'http://example.com/video.mjpg',
-                'status_code': 0,
-                'status_msg': None
-            }
-        }
 
 
 class VideoChunkBase(BaseModel):
@@ -37,7 +46,7 @@ class VideoChunkBase(BaseModel):
     file_path: str
     start_time: float
     end_time: float
-    n_frames: int
+    farme_count: int
 
 
 class VideoChunkCreate(VideoChunkBase):
@@ -49,25 +58,3 @@ class VideoChunk(VideoChunkBase):
 
     class Config:
         orm_mode = True
-        schema_extra = {
-            'example': {
-                'id': 1,
-                'source_id': 1,
-                'file_path': '/path/to/chunk.mp4',
-                'start_time': 0.0,
-                'end_time': 10.0
-            }
-        }
-
-
-class Frame(BaseModel):
-    source_id: int
-    timestamp: float
-
-    class Config:
-        schema_extra = {
-            'example': {
-                'source_id': 1,
-                'timestamp': 1234567890.234
-            }
-        }

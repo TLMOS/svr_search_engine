@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="col-md-8 offset-md-2">
+    <h3 class="title">{% block title %} Profile {% endblock %}</h3>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Username:</strong> {{ current_user.db_user.username }}</p>
+            <p><strong>Source Manager URL:</strong> {{ current_user.db_user.source_manager.url }}</p>
+            <p><strong>Source Manager Status:</strong> {{ source_manager_status }}</p>
+        </div>
+        <div class="card-footer">
+            <form action="{{ url_for('main.unregister') }}" method="POST">
+                <button type="submit" class="btn btn-danger btn-lg btn-block">Delete Account</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

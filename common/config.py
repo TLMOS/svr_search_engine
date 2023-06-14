@@ -1,46 +1,82 @@
-import os
+from typing import Literal, Optional
+from ipaddress import IPv4Address
 from pathlib import Path
+import os
 
-from pydantic import BaseModel, BaseSettings
-
-
-basedir = Path(__file__).parent.parent.absolute()
+from pydantic import (
+    BaseModel,
+    BaseSettings,
+    Field,
+    validator,
+    HttpUrl,
+    PositiveInt,
+)
 
 
 class WebSettings(BaseModel):
-    client_id: str = 'search_engine_web_ui'
-    max_content_length: int = 1024 * 1024 * 200
+    max_content_length: PositiveInt = 1024 * 1024 * 200
     upload_extensions: list[str] = ['.jpg', '.png', '.mp4', '.avi']
+
+    username_min_length: PositiveInt = 3
+    username_max_length: PositiveInt = 32
+    password_min_length: PositiveInt = 8
+    password_max_length: PositiveInt = 64
+
+    secret_key: str = os.urandom(32)  # Make sure to redefine it in production
+    jwt_algorithm: Literal['HS256'] = 'HS256'
+    jwt_access_token_expire_minutes: PositiveInt = 60 * 24 * 7  # 7 days
+
+    hnsw_recreate_index_on_startup: bool = False
+    hnsw_dim: PositiveInt = 512
+    hnsw_distance_metric: Literal['L2', 'IP', 'COSINE'] = 'IP'
+    hnsw_initial_cap: PositiveInt = 10000
+    hnsw_m: PositiveInt = 40
+    hnsw_ef_construction: PositiveInt = 200
+    hnsw_ef_runtime: PositiveInt = 100
 
 
 class EncoderSettings(BaseModel):
-    url: str = 'http://encoder:8000'
-    model: str = 'RN50'
+    url: HttpUrl = 'http://encoder:8080'
+    model: str = 'openai/clip-vit-base-patch32'
 
 
 class SearchEngineSettings(BaseModel):
-    url: str = 'http://search_engine:8000'
+    url: HttpUrl = 'http://search_engine:8080'
 
 
 class RedisSettings(BaseModel):
-    host: str = 'redis'
-    port: int = 6379
+    host: IPv4Address | HttpUrl = 'redis://redis'
+    port: PositiveInt = 6379
+    db: PositiveInt = 0
+    username: Optional[str] = None
+    password: Optional[str] = None
 
 
 class RabbitMQSettings(BaseModel):
-    sm_username: str = 'source_manager'
-    sm_password: str = 'source_manager'
-
-
-class SecuritySettings(BaseModel):
-    secret_key: str = os.urandom(32)  # Make sure to redefine it in production
-    jwt_algorithm: str = 'HS256'
-    jwt_access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
+    host: IPv4Address | HttpUrl = 'http://rabbitmq'
+    port: PositiveInt = 5672
+    virtual_host: str = '/'
+    source_manager_username: str = 'source_manager'
+    source_manager_password: str = 'source_manager'
 
 
 class PathsSettings(BaseModel):
-    static_dir = (basedir / 'static')
-    media_dir = (basedir / 'media')
+    static_dir: Path = Path('./static')
+    media_dir: Path = Path('./media')
+
+    @validator('*')
+    def validate_path(cls, v: Path, field: Field):
+        if field.name.endswith('_dir'):
+            v.mkdir(parents=True, exist_ok=True)
+        return v.resolve()
+
+
+class VideoSettings(BaseModel):
+    frame_width: int = Field(640, ge=28, le=1920)
+    frame_height: int = Field(480, ge=28, le=1080)
+    chunk_duration: float = Field(60, gt=1, le=600)
+    chunk_fps: float = Field(1, gt=0, le=60)
+    draw_timestamp: bool = True
 
 
 class Settings(BaseSettings):
@@ -49,16 +85,11 @@ class Settings(BaseSettings):
     search_engine: SearchEngineSettings = SearchEngineSettings()
     redis: RedisSettings = RedisSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
-    security: SecuritySettings = SecuritySettings()
     paths: PathsSettings = PathsSettings()
+    video: VideoSettings = VideoSettings()
 
     class Config:
         env_nested_delimiter = '__'
 
 
 settings = Settings()
-
-settings.paths.static_dir = settings.paths.static_dir.resolve().absolute()
-settings.paths.media_dir = settings.paths.media_dir.resolve().absolute()
-settings.paths.static_dir.mkdir(exist_ok=True)
-settings.paths.media_dir.mkdir(exist_ok=True)

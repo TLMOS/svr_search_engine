@@ -1,5 +1,7 @@
-env
 __pycache__
+.vscode
+env
+**.ipynb
 
-services/redis/data
-models/
+*.local*
+models

@@ -1,13 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.responses import RedirectResponse
-import numpy as np
-import torch
-import clip
+from transformers import TFCLIPModel, CLIPTokenizer
 
 from common.config import settings
 
 
-model, preprocess = clip.load(settings.encoder.model)
+model_id = settings.encoder.model
+model = TFCLIPModel.from_pretrained(model_id)
+tokenizer = CLIPTokenizer.from_pretrained(model_id)
 
 
 description = """
@@ -27,13 +27,18 @@ app = FastAPI(
 
 
 @app.get('/', include_in_schema=False)
-async def root():
+def root():
     """Root endpoint, redirects to docs"""
     return RedirectResponse(url='/docs')
 
 
-@app.get('/encode')
-async def encode(text: str) -> dict[str, str]:
+@app.get(
+    '/encode',
+    summary='Encode text into an embedding vector',
+    response_description='Encoded text',
+    response_class=Response,
+)
+def encode(text: str):
     """
     Encode text into an embedding vector.
 
@@ -41,18 +46,12 @@ async def encode(text: str) -> dict[str, str]:
     - text (str): text to encode
 
     Returns:
-    - dict[str, str]: encoded text
-
-    ```python
-    {
-        'encoded': 'hex string'
-    }
-    ```
+    - bytes: encoded text
     """
-    text = clip.tokenize([text])
-    with torch.no_grad():
-        text_features = model.encode_text(text).cpu().numpy()[0]
-    print(text_features.shape)
-    return {
-        'encoded': text_features.astype(np.float32).tobytes().hex()
-    }
+    inputs = tokenizer(text, return_tensors="tf")
+    text_embeddings = model.get_text_features(**inputs)
+    encoded = text_embeddings[0].numpy().astype('float32').tobytes()
+    return Response(
+        content=encoded,
+        media_type='application/octet-stream'
+    )

@@ -39,9 +39,10 @@ def start(id: int):
     session.request('PUT', url, params=params)
 
 
-def start_all():
+def start_all(start_finished: bool = False):
     url = 'sources/start/all'
-    session.request('PUT', url)
+    params = {'start_finished': start_finished}
+    session.request('PUT', url, params=params)
 
 
 def pause(id: int):
