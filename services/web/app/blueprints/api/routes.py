@@ -1,9 +1,11 @@
 from common.config import settings
 from common import schemas
 from app.blueprints.api import bp
+from app.security.auth import source_manager_auth_required
 
 
-@bp.route('/rabbitmq/credentials', methods=['GET'])
+@bp.route('/rabbitmq_credentials', methods=['GET'])
+@source_manager_auth_required
 def rabbitmq_credentials():
     """
     Get RabbitMQ credentials for the source manager.

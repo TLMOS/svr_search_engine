@@ -1,13 +1,16 @@
 from typing import Optional
 from datetime import datetime, timedelta
+from base64 import b64decode
 
 from jose import JWTError, jwt
 from pydantic import BaseModel, ValidationError
+from flask import request, jsonify
 from flask_login import UserMixin
 from redis_om import NotFoundError
 
 from common.config import settings
 from app.database import models
+from app.security.secrets import verify
 
 
 class TokenData(BaseModel):
@@ -106,3 +109,39 @@ def decode_access_token(token: str) -> Optional[TokenData]:
         )
     except (JWTError, ValidationError):
         return None
+
+
+def validate_source_manager_token(token: str) -> bool:
+    """
+    Validate basic authentication token for source manager.
+
+    Parameters:
+    - token (str): basic authentication token
+
+    Returns:
+    - bool: True if valid, False otherwise
+    """
+    try:
+        token = token.split(' ')[1]
+        token = b64decode(token.encode()).decode()
+        client_id, client_secret = token.split(':')
+        db_user = models.User.find(
+            models.User.source_manager.client_id == client_id
+        ).first()
+        return verify(client_secret, db_user.source_manager.client_secret_hash)
+    except Exception:
+        return False
+
+
+def source_manager_auth_required(func):
+    """
+    Decorator for Flask routes that require source manager authentication.
+    """
+
+    def wrapper(*args, **kwargs):
+        auth = request.headers.get('Authorization')
+        if not auth or not validate_source_manager_token(auth):
+            return jsonify({'message': 'Unauthorized'}), 401
+        return func(*args, **kwargs)
+
+    return wrapper

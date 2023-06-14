@@ -6,6 +6,8 @@ from uuid import uuid4
 from common.clients.http import ClientSession
 from common.utils.fastapi import get_error_msg
 from common import schemas
+from app.database import models
+from app.security import secrets
 
 
 session = ClientSession('0.0.0.0:8080')  # Base url is set with user login
@@ -47,6 +49,21 @@ def register() -> tuple[str, str, str]:
     api_key = token_urlsafe(32)
     client_id = str(uuid4()).replace('-', '')
     client_secret = token_urlsafe(32)
+
+    # Create temporary user, which will be used by source manager for
+    # first authorization
+    db_tmp_user = models.User(
+        username='',
+        password_hash='',
+        source_manager=models.SourceManager(
+            url='',
+            api_key_encrypted='',
+            client_id=client_id,
+            client_secret_hash=secrets.hash(client_secret),
+        ),
+    )
+    db_tmp_user.expire(60)
+    db_tmp_user.save()
 
     credentials = schemas.SourceManagerRegister(
         api_key=api_key,

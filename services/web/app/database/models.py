@@ -19,7 +19,7 @@ class SourceManager(EmbeddedJsonModel):
     url: str
     api_key_encrypted: str
 
-    client_id: str
+    client_id: str = Field(index=True)
     client_secret_hash: str
 
     class Meta:
