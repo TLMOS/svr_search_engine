@@ -100,8 +100,7 @@ def login():
             db_user.save()
             source_manager_api_key = api_key
     except Exception as e:
-        flash('Failed to register source manager: {}'.format(e), 'error')
-        return redirect(url_for('main.login'))
+        flash('Failed to register source manager: {}'.format(e), 'error')   
 
     # Create JWT access token
     token_expires = timedelta(

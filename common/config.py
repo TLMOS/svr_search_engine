@@ -1,5 +1,4 @@
 from typing import Literal, Optional
-from ipaddress import IPv4Address
 from pathlib import Path
 import os
 
@@ -45,7 +44,7 @@ class SearchEngineSettings(BaseModel):
 
 
 class RedisSettings(BaseModel):
-    host: IPv4Address | HttpUrl = 'redis://redis'
+    host: str = '0.0.0.0'
     port: PositiveInt = 6379
     db: PositiveInt = 0
     username: Optional[str] = None
@@ -53,7 +52,7 @@ class RedisSettings(BaseModel):
 
 
 class RabbitMQSettings(BaseModel):
-    host: IPv4Address | HttpUrl = 'http://rabbitmq'
+    host: str = '0.0.0.0'
     port: PositiveInt = 5672
     virtual_host: str = '/'
     source_manager_username: str = 'source_manager'
