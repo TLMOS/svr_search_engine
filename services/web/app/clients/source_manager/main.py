@@ -62,8 +62,8 @@ def register() -> tuple[str, str, str]:
             client_secret_hash=secrets.hash(client_secret),
         ),
     )
-    db_tmp_user.expire(60)
     db_tmp_user.save()
+    db_tmp_user.expire(60)
 
     credentials = schemas.SourceManagerRegister(
         api_key=api_key,
