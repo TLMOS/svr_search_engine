@@ -35,10 +35,11 @@ schema = (
 )
 
 # Create index if it doesn't exist, or recreate it if such option is enabled
-if settings.web.hnsw_recreate_index_on_startup:
-    connection.ft('frame_idx').drop_index()
 try:
     connection.ft('frame_idx').info()
+    if settings.web.hnsw_recreate_index_on_startup:
+        connection.ft('frame_idx').dropindex(delete_documents=False)
+    connection.ft('frame_idx').create_index(schema, definition=index_def)
 except ResponseError:
     connection.ft('frame_idx').create_index(schema, definition=index_def)
 
