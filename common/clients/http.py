@@ -20,6 +20,8 @@ class ClientSession:
 
     Attributes:
     - base_url (str): base url for requests
+    - max_retries (int): number of retries for request
+    - timeout (float): timeout for request
     - state (dict): state dictionary to store data between requests
 
     Usage:
@@ -41,8 +43,11 @@ class ClientSession:
         print(response.text())
     """
 
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str,
+                 max_retries: int = 3, timeout: float = 5):
         self.base_url = base_url
+        self.max_retries = max_retries
+        self.timeout = timeout
         self.state = {}
         self._middleware: Optional[Callable] = None
 
@@ -51,9 +56,22 @@ class ClientSession:
         self._middleware = func
         return func
 
+    def _safe_request(self, method: str,
+                      url: str, **kwargs) -> requests.Response:
+        """Make request with retries and timeout."""
+        retries = self.max_retries
+        while retries > 0:
+            try:
+                return requests.request(
+                    method, url, timeout=self.timeout, **kwargs
+                )
+            except requests.exceptions.RequestException:
+                retries -= 1
+        raise requests.exceptions.RequestException()
+
     def _call_factory(self, method: str):
         """Create call function with middleware."""
-        call = partial(requests.request, method)
+        call = partial(self._safe_request, method)
         if self._middleware:
             call = partial(self._middleware, call)
         return call
