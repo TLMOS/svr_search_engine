@@ -28,10 +28,11 @@ class WebSettings(BaseModel):
     hnsw_recreate_index_on_startup: bool = False
     hnsw_dim: PositiveInt = 512
     hnsw_distance_metric: Literal['L2', 'IP', 'COSINE'] = 'IP'
-    hnsw_initial_cap: PositiveInt = 10000
+    hnsw_initial_cap: PositiveInt = 1000000
     hnsw_m: PositiveInt = 40
     hnsw_ef_construction: PositiveInt = 200
     hnsw_ef_runtime: PositiveInt = 100
+    hnsw_epsilon: float = 0.8
 
 
 class EncoderSettings(BaseModel):

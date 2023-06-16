@@ -11,24 +11,25 @@ from app.database import connection
 
 
 index_def = IndexDefinition(
-    prefix=["frame:"],
+    prefix=['frame:'],
 )
 
 schema = (
-    TagField("source_manager_id"),
-    TagField("source_id"),
-    NumericField("timestamp"),
+    TagField('source_manager_id'),
+    TagField('source_id'),
+    NumericField('timestamp'),
     VectorField(
-        name="embedding",
-        algorithm="HNSW",
+        name='embedding',
+        algorithm='HNSW',
         attributes={
-            "TYPE": "FLOAT32",
-            "DIM": settings.web.hnsw_dim,
-            "DISTANCE_METRIC": settings.web.hnsw_distance_metric,
-            "INITIAL_CAP": settings.web.hnsw_initial_cap,
-            "M": settings.web.hnsw_m,
-            "EF_CONSTRUCTION": settings.web.hnsw_ef_construction,
-            "EF_RUNTIME": settings.web.hnsw_ef_runtime,
+            'TYPE': 'FLOAT32',
+            'DIM': settings.web.hnsw_dim,
+            'DISTANCE_METRIC': settings.web.hnsw_distance_metric,
+            'INITIAL_CAP': settings.web.hnsw_initial_cap,
+            'M': settings.web.hnsw_m,
+            'EF_CONSTRUCTION': settings.web.hnsw_ef_construction,
+            'EF_RUNTIME': settings.web.hnsw_ef_runtime,
+            'EPSILON': settings.web.hnsw_epsilon,
         }
     ),
 )
@@ -66,8 +67,8 @@ def find(
         source_manager_id, time_start, time_end
     )
     query = f'({filter})=>[KNN {top_k} @embedding $query_embedding AS score]'
-    query_params = {"query_embedding": query_embedding}
-    results = connection.ft("frame_idx").search(
+    query_params = {'query_embedding': query_embedding}
+    results = connection.ft('frame_idx').search(
         Query(query).sort_by('score').dialect(2),
         query_params=query_params
     )
