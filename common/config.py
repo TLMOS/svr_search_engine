@@ -7,7 +7,6 @@ from pydantic import (
     BaseSettings,
     Field,
     validator,
-    HttpUrl,
     PositiveInt,
 )
 
@@ -36,12 +35,12 @@ class WebSettings(BaseModel):
 
 
 class EncoderSettings(BaseModel):
-    url: HttpUrl = 'http://encoder:8080'
+    url: str = 'http://encoder:8080'
     model: str = 'openai/clip-vit-base-patch32'
 
 
 class SearchEngineSettings(BaseModel):
-    url: HttpUrl = 'http://search_engine:8080'
+    url: str = 'http://search_engine:8080'
 
 
 class RedisSettings(BaseModel):
